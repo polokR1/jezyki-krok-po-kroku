@@ -1,0 +1,70 @@
+workflows:
+  ios-check:
+    name: iOS - test kompilacji
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.44.4
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Pobranie pakietów Flutter
+        script: flutter pub get
+      - name: Analiza projektu
+        script: flutter analyze
+      - name: Testy
+        script: flutter test
+      - name: Instalacja zależności iOS
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Kompilacja iOS bez podpisu
+        script: flutter build ios --release --no-codesign
+      - name: Przygotowanie IPA do sideloadingu
+        script: |
+          mkdir -p build/ios/unsigned/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/unsigned/Payload/
+          cd build/ios/unsigned
+          zip -r ../Jezyki-Krok-po-Kroku-unsigned.ipa Payload
+    artifacts:
+      - build/ios/Jezyki-Krok-po-Kroku-unsigned.ipa
+      - build/ios/iphoneos/**/*.app
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-release:
+    name: iOS - podpisany plik IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.44.4
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: pl.jezykikrokpokroku.app
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Pobranie pakietów Flutter
+        script: flutter pub get
+      - name: Analiza projektu
+        script: flutter analyze
+      - name: Testy
+        script: flutter test
+      - name: Instalacja zależności iOS
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Zastosowanie certyfikatu i profilu
+        script: xcode-project use-profiles
+      - name: Kompilacja podpisanego IPA
+        script: >-
+          flutter build ipa --release
+          --build-number=$PROJECT_BUILD_NUMBER
+          --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+      - /tmp/xcodebuild_logs/*.log

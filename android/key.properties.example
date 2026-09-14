@@ -1,0 +1,6 @@
+# Skopiuj ten plik jako android/key.properties i uzupełnij dane klucza.
+# Pliki key.properties i *.jks są ignorowane przez Git i nie mogą trafić do repozytorium.
+storePassword=TU_WPISZ_HASLO_MAGAZYNU
+keyPassword=TU_WPISZ_HASLO_KLUCZA
+keyAlias=upload
+storeFile=../upload-keystore.jks
