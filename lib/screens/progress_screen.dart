@@ -68,8 +68,12 @@ class ProgressScreen extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.check_circle_outline_rounded,
                   value:
-                      '${progress.completedLessons.length}/${course.lessons.length}',
-                  label: localized(language, pl: 'Lekcje', uk: 'Уроки'),
+                      '${controller.completedActivities(course)}/${course.activityCount}',
+                  label: localized(
+                    language,
+                    pl: 'Aktywności',
+                    uk: 'Активності',
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -77,7 +81,7 @@ class ProgressScreen extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.auto_awesome_rounded,
                   value:
-                      '${progress.masteredItems.length}/${course.items.length}',
+                      '${controller.masteredItems(course)}/${course.items.length}',
                   label: localized(language, pl: 'Opanowane', uk: 'Засвоєно'),
                 ),
               ),
@@ -88,6 +92,36 @@ class ProgressScreen extends StatelessWidget {
             icon: Icons.schedule_rounded,
             value: '${progress.minutesStudied} min',
             label: localized(language, pl: 'Czas nauki', uk: 'Час навчання'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.local_fire_department_rounded,
+                  value: '${progress.streak}',
+                  label: localized(language, pl: 'Seria dni', uk: 'Серія днів'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.track_changes_rounded,
+                  value: '${progress.accuracy}%',
+                  label: localized(language, pl: 'Skuteczność', uk: 'Точність'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _StatCard(
+            icon: Icons.event_repeat_rounded,
+            value: '${controller.dueReviews(course)}',
+            label: localized(
+              language,
+              pl: 'Wyrażenia do powtórki',
+              uk: 'Вислови для повторення',
+            ),
           ),
           const SizedBox(height: 22),
           Text(
@@ -108,7 +142,7 @@ class ProgressScreen extends StatelessWidget {
               title: Text(lesson.title.resolve(language)),
               trailing: Text(
                 progress.bestScores.containsKey(lesson.id)
-                    ? '${progress.bestScores[lesson.id]}/${lesson.items.length}'
+                    ? '${progress.bestScores[lesson.id]}%'
                     : '—',
               ),
             ),

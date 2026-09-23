@@ -3,25 +3,38 @@
 Nowa, niezależna aplikacja Flutter do nauki wielu języków. Użytkownik wybiera
 kurs, a postęp każdego języka jest przechowywany osobno na urządzeniu.
 
-## Kursy startowe
+## Pełne kursy
 
 - angielski (`en-GB`),
 - hiszpański (`es-ES`),
 - grecki (`el-GR`),
 - szwedzki (`sv-SE`).
 
-Każdy kurs ma obecnie 3 moduły startowe, 6 lekcji i 30 elementów nauki.
-Wyjaśnienia są dostępne po polsku i ukraińsku.
+Każdy kurs ma 32 uporządkowane moduły, 640 elementów nauki, 128 lekcji
+słownictwa, 16 lekcji gramatycznych, 4 dialogi i 4 historie. Daje to 152
+aktywności na język oraz 608 aktywności w całej aplikacji. Materiał prowadzi od
+A0 do B1–B2, a wyjaśnienia są dostępne po polsku i ukraińsku.
+
+Pierwsze moduły uczą całych zdań przez słuchanie, rozpoznawanie, kafelki i
+samodzielne odtwarzanie. Kurs greckiego zaczyna się od pięciu kolejnych modułów
+alfabetu: liter, znaków mylących, sylab, dwuznaków oraz pierwszych słów. Każda
+lekcja ma własne objaśnienie i wskazówkę językową. Kolejne kroki odblokowują się
+po uzyskaniu co najmniej 80%, a trudne elementy trafiają do zaplanowanych
+powtórek.
 
 ## Architektura
 
 - `lib/domain` — neutralne modele i silnik ćwiczeń,
-- `lib/data/courses` — niezależne pakiety treści poszczególnych języków,
+- `lib/data/courses` — konfiguracja niezależnych kursów,
+- `lib/data/generated` — zapisany w aplikacji katalog 2560 tłumaczeń,
+- `lib/data/practice_catalog.dart` — gramatyka, dialogi i historie,
 - `lib/state` — wybór kursu, ustawienia i oddzielny postęp,
 - `lib/services` — synteza oraz rozpoznawanie mowy z locale kursu,
 - `lib/screens` — wybór kursu, ścieżka nauki, lekcja, postęp i ustawienia.
 
-Generator ćwiczeń tworzy zadania wyboru, pisania i słuchania. Porównywanie
+Generator ćwiczeń tworzy zadania wyboru w obu kierunkach, pisania, budowania
+zdań z kafelków i słuchania. Inteligentne powtórki planują trudne słowa ponownie, a
+statystyki obejmują skuteczność, serię dni oraz dzienny cel. Porównywanie
 odpowiedzi ignoruje wielkość liter, interpunkcję i najczęstsze znaki
 diakrytyczne. Błędy zapisu, syntezy i rozpoznawania mowy są obsługiwane bez
 zamykania aplikacji.
@@ -46,7 +59,7 @@ warto użyć kopii projektu w ścieżce ASCII.
 - pakiet Dart: `jezyki_krok_po_kroku`,
 - Android/iOS: `pl.jezykikrokpokroku.app`,
 - nazwa widoczna: `Języki Krok po Kroku`,
-- wersja początkowa nowego projektu: `0.1.0+1`.
+- bieżąca wersja rozwojowa: `0.3.0+3`.
 
 Projekt nie używa danych ani kluczy postępu dawnej aplikacji „Svenska Krok po
 Kroku”. Przy pierwszym uruchomieniu usuwa znane stare klucze preferencji.

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localization.dart';
 import '../state/app_controller.dart';
 import 'progress_screen.dart';
+import 'practice_hub_screen.dart';
 import 'settings_screen.dart';
 import 'study_path_screen.dart';
 
@@ -25,6 +26,7 @@ class _HomeShellState extends State<HomeShell> {
         index: _index,
         children: [
           StudyPathScreen(controller: widget.controller),
+          PracticeHubScreen(controller: widget.controller),
           ProgressScreen(controller: widget.controller),
           SettingsScreen(controller: widget.controller),
         ],
@@ -37,6 +39,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: const Icon(Icons.route_outlined),
             selectedIcon: const Icon(Icons.route_rounded),
             label: localized(language, pl: 'Nauka', uk: 'Навчання'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.fitness_center_outlined),
+            selectedIcon: const Icon(Icons.fitness_center_rounded),
+            label: localized(language, pl: 'Praktyka', uk: 'Практика'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.insights_outlined),

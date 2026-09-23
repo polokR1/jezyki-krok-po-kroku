@@ -1,6 +1,6 @@
 import '../models/course.dart';
 
-enum ExerciseType { choice, writing, listening }
+enum ExerciseType { choice, reverseChoice, writing, listening, wordOrder }
 
 class LearningExercise {
   const LearningExercise({
@@ -30,56 +30,91 @@ class LearningEngine {
         .map((item) => item.translation.resolve(interfaceLanguage))
         .toSet()
         .toList();
+    final allTargets = course.items.map((item) => item.target).toSet().toList();
 
     return [
       for (var index = 0; index < lesson.items.length; index++)
-        _exerciseFor(
-          lesson.items[index],
-          index,
-          allTranslations,
-          interfaceLanguage,
+        ..._exercisesFor(
+          item: lesson.items[index],
+          index: index,
+          translations: allTranslations,
+          targets: allTargets,
+          interfaceLanguage: interfaceLanguage,
         ),
     ];
   }
 
-  static LearningExercise _exerciseFor(
-    LearningItem item,
-    int index,
-    List<String> translations,
-    String interfaceLanguage,
-  ) {
+  static List<LearningExercise> _exercisesFor({
+    required LearningItem item,
+    required int index,
+    required List<String> translations,
+    required List<String> targets,
+    required String interfaceLanguage,
+  }) {
     final translation = item.translation.resolve(interfaceLanguage);
-    final type = ExerciseType.values[index % ExerciseType.values.length];
-    if (type == ExerciseType.writing) {
-      return LearningExercise(
-        type: type,
+    final firstType = <ExerciseType>[
+      ExerciseType.choice,
+      ExerciseType.listening,
+      ExerciseType.reverseChoice,
+      ExerciseType.choice,
+      ExerciseType.listening,
+    ][index % 5];
+    final productionType = item.target.trim().contains(' ')
+        ? ExerciseType.wordOrder
+        : ExerciseType.writing;
+
+    return [
+      if (firstType == ExerciseType.reverseChoice)
+        LearningExercise(
+          type: firstType,
+          item: item,
+          prompt: translation,
+          answer: item.target,
+          options: _optionsFor(
+            answer: item.target,
+            candidates: targets,
+            seed: index,
+          ),
+        )
+      else
+        LearningExercise(
+          type: firstType,
+          item: item,
+          prompt: item.target,
+          answer: translation,
+          options: _optionsFor(
+            answer: translation,
+            candidates: translations,
+            seed: index,
+          ),
+        ),
+      LearningExercise(
+        type: productionType,
         item: item,
         prompt: translation,
         answer: item.target,
-      );
-    }
+      ),
+    ];
+  }
 
-    final distractors = translations
-        .where((value) => value != translation)
-        .toList();
-    final options = <String>[translation];
+  static List<String> _optionsFor({
+    required String answer,
+    required List<String> candidates,
+    required int seed,
+  }) {
+    final distractors = candidates.where((value) => value != answer).toList();
+    final options = <String>[answer];
     for (
       var offset = 0;
       offset < distractors.length && options.length < 3;
       offset++
     ) {
-      options.add(distractors[(index + offset) % distractors.length]);
+      options.add(distractors[(seed + offset) % distractors.length]);
     }
     options.sort(
-      (a, b) => _stableOrder('$index:$a').compareTo(_stableOrder('$index:$b')),
+      (a, b) => _stableOrder('$seed:$a').compareTo(_stableOrder('$seed:$b')),
     );
-    return LearningExercise(
-      type: type,
-      item: item,
-      prompt: item.target,
-      answer: translation,
-      options: options,
-    );
+    return options;
   }
 
   static bool answersMatch(String actual, String expected) =>
@@ -118,6 +153,7 @@ class LearningEngine {
       'ΐ': 'ι',
       'ϋ': 'υ',
       'ΰ': 'υ',
+      'ς': 'σ',
     };
     var normalized = value.toLowerCase().trim();
     replacements.forEach(

@@ -7,7 +7,7 @@ import '../domain/models/course.dart';
 class AppController extends ChangeNotifier {
   AppController._(this._prefs);
 
-  static const _schemaVersion = 2;
+  static const _schemaVersion = 3;
   static const _schemaKey = 'multicourse.schemaVersion';
   static const _legacyKeys = <String>[
     'onboardingDone',
@@ -49,6 +49,7 @@ class AppController extends ChangeNotifier {
   String? selectedCourseId;
   String themePreference = 'system';
   double speechRate = 0.42;
+  int dailyGoalMinutes = 15;
   String? storageWarning;
 
   static Future<AppController> create() async {
@@ -72,6 +73,7 @@ class AppController extends ChangeNotifier {
       if (courseById(selectedCourseId) == null) selectedCourseId = null;
       themePreference = _prefs.getString('multicourse.theme') ?? 'system';
       speechRate = _prefs.getDouble('multicourse.speechRate') ?? 0.42;
+      dailyGoalMinutes = _prefs.getInt('multicourse.dailyGoalMinutes') ?? 15;
       for (final course in courses) {
         _progress[course.id] = CourseProgress.decode(
           _prefs.getString(_progressKey(course.id)),
@@ -136,23 +138,72 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setDailyGoalMinutes(int value) async {
+    if (!const {5, 10, 15, 20, 30}.contains(value)) return;
+    dailyGoalMinutes = value;
+    await _write(() => _prefs.setInt('multicourse.dailyGoalMinutes', value));
+    notifyListeners();
+  }
+
+  Future<void> recordAnswer({
+    required String courseId,
+    required String itemId,
+    required bool correct,
+  }) async {
+    if (courseById(courseId) == null) return;
+    progressFor(courseId).recordAnswer(itemId: itemId, correct: correct);
+    await _saveProgress(courseId);
+    notifyListeners();
+  }
+
   bool isLessonCompleted(LanguageCourse course, CourseLesson lesson) =>
       progressFor(course.id).completedLessons.contains(lesson.id);
+
+  bool isLessonAvailable(LanguageCourse course, CourseLesson lesson) {
+    final index = course.lessons.indexWhere(
+      (candidate) => candidate.id == lesson.id,
+    );
+    if (index <= 0) return index == 0;
+    return progressFor(
+      course.id,
+    ).completedLessons.contains(course.lessons[index - 1].id);
+  }
+
+  bool isActivityCompleted(String courseId, String activityId) =>
+      progressFor(courseId).completedLessons.contains(activityId);
+
+  Future<void> completeActivity({
+    required LanguageCourse course,
+    required String activityId,
+    int minutes = 8,
+  }) async {
+    final progress = progressFor(course.id);
+    if (progress.completedLessons.add(activityId)) {
+      progress.addStudyMinutes(minutes);
+    }
+    await _saveProgress(course.id);
+    notifyListeners();
+  }
 
   Future<void> completeLesson({
     required LanguageCourse course,
     required CourseLesson lesson,
     required int correctAnswers,
+    required int totalQuestions,
   }) async {
     final progress = progressFor(course.id);
-    progress.completedLessons.add(lesson.id);
-    progress.minutesStudied += lesson.minutes;
-    final previous = progress.bestScores[lesson.id] ?? 0;
-    if (correctAnswers > previous) {
-      progress.bestScores[lesson.id] = correctAnswers;
+    progress.addStudyMinutes(lesson.minutes);
+    final score = totalQuestions == 0
+        ? 0
+        : ((correctAnswers / totalQuestions) * 100).round();
+    if (score >= 80) {
+      progress.completedLessons.add(lesson.id);
+    } else {
+      progress.completedLessons.remove(lesson.id);
     }
-    if (correctAnswers >= (lesson.items.length * 0.8).ceil()) {
-      progress.masteredItems.addAll(lesson.items.map((item) => item.id));
+    final previous = progress.bestScores[lesson.id] ?? 0;
+    if (score > previous) {
+      progress.bestScores[lesson.id] = score;
     }
     await _saveProgress(course.id);
     notifyListeners();
@@ -164,12 +215,36 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
-  int completedLessons(LanguageCourse course) =>
-      progressFor(course.id).completedLessons.length;
+  int completedLessons(LanguageCourse course) {
+    final completed = progressFor(course.id).completedLessons;
+    return course.lessons
+        .where((lesson) => completed.contains(lesson.id))
+        .length;
+  }
+
+  int completedActivities(LanguageCourse course) => progressFor(course.id)
+      .completedLessons
+      .where(
+        (id) =>
+            course.lessons.any((lesson) => lesson.id == id) ||
+            course.grammarLessons.any((lesson) => lesson.id == id) ||
+            course.dialogues.any((dialogue) => dialogue.id == id) ||
+            course.stories.any((story) => story.id == id),
+      )
+      .length;
 
   double courseCompletion(LanguageCourse course) {
-    if (course.lessons.isEmpty) return 0;
-    return (completedLessons(course) / course.lessons.length).clamp(0, 1);
+    if (course.activityCount == 0) return 0;
+    return (completedActivities(course) / course.activityCount).clamp(0, 1);
+  }
+
+  int dueReviews(LanguageCourse course) => course.items
+      .where((item) => progressFor(course.id).isDue(item.id))
+      .length;
+
+  int masteredItems(LanguageCourse course) {
+    final validIds = course.items.map((item) => item.id).toSet();
+    return progressFor(course.id).masteredItems.where(validIds.contains).length;
   }
 
   Future<void> _saveProgress(String courseId) => _write(

@@ -81,7 +81,7 @@ class CoursePickerScreen extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 14,
                   crossAxisSpacing: 14,
-                  childAspectRatio: 0.72,
+                  childAspectRatio: 0.56,
                 ),
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final course = courses[index];
@@ -107,12 +107,30 @@ class CoursePickerScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(course.nativeName),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
+                            LinearProgressIndicator(
+                              value: course.items.isEmpty
+                                  ? 0
+                                  : controller.masteredItems(course) /
+                                        course.items.length,
+                              minHeight: 6,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            const SizedBox(height: 6),
                             Text(
                               localized(
                                 language,
-                                pl: '${course.modules.length} moduły · ${course.lessons.length} lekcji',
-                                uk: '${course.modules.length} модулі · ${course.lessons.length} уроків',
+                                pl: 'Opanowane ${controller.masteredItems(course)}/${course.items.length}',
+                                uk: 'Засвоєно ${controller.masteredItems(course)}/${course.items.length}',
+                              ),
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              localized(
+                                language,
+                                pl: '${course.modules.length} moduły · ${course.activityCount} lekcji',
+                                uk: '${course.modules.length} модулі · ${course.activityCount} уроків',
                               ),
                               style: Theme.of(context).textTheme.labelMedium,
                             ),

@@ -27,12 +27,15 @@ class _LessonScreenState extends State<LessonScreen> {
   late List<LearningExercise> _exercises;
   var _studyIndex = 0;
   var _exerciseIndex = 0;
+  var _showingGuide = true;
   var _studying = true;
   var _finished = false;
   var _answered = false;
   var _correct = 0;
   bool? _lastCorrect;
   String? _selectedOption;
+  final List<String> _availableTiles = [];
+  final List<String> _assembledTiles = [];
 
   String get _language => widget.controller.interfaceLanguage;
 
@@ -48,6 +51,28 @@ class _LessonScreenState extends State<LessonScreen> {
       lesson: widget.lesson,
       interfaceLanguage: widget.controller.interfaceLanguage,
     );
+    _prepareTilesFor(_exerciseIndex);
+  }
+
+  void _prepareTilesFor(int index) {
+    _availableTiles.clear();
+    _assembledTiles.clear();
+    if (_exercises[index].type != ExerciseType.wordOrder) return;
+    final words = _exercises[index].answer
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    for (var wordIndex = 0; wordIndex < words.length; wordIndex++) {
+      final destination = (wordIndex * 3 + index) % words.length;
+      _availableTiles.insert(
+        destination.clamp(0, _availableTiles.length).toInt(),
+        words[wordIndex],
+      );
+    }
+    if (_availableTiles.join(' ') == words.join(' ') && words.length > 1) {
+      _availableTiles.setAll(0, _availableTiles.reversed.toList());
+    }
   }
 
   @override
@@ -81,12 +106,14 @@ class _LessonScreenState extends State<LessonScreen> {
     }
   }
 
-  void _checkAnswer() {
+  Future<void> _checkAnswer() async {
     if (_answered) return;
     final exercise = _exercises[_exerciseIndex];
-    final actual = exercise.type == ExerciseType.writing
-        ? _answerController.text
-        : _selectedOption ?? '';
+    final actual = switch (exercise.type) {
+      ExerciseType.writing => _answerController.text,
+      ExerciseType.wordOrder => _assembledTiles.join(' '),
+      _ => _selectedOption ?? '',
+    };
     if (actual.trim().isEmpty) return;
     final matches = LearningEngine.answersMatch(actual, exercise.answer);
     setState(() {
@@ -94,6 +121,11 @@ class _LessonScreenState extends State<LessonScreen> {
       _lastCorrect = matches;
       if (matches) _correct++;
     });
+    await widget.controller.recordAnswer(
+      courseId: widget.course.id,
+      itemId: exercise.item.id,
+      correct: matches,
+    );
   }
 
   Future<void> _nextExercise() async {
@@ -104,6 +136,7 @@ class _LessonScreenState extends State<LessonScreen> {
         _lastCorrect = null;
         _selectedOption = null;
         _answerController.clear();
+        _prepareTilesFor(_exerciseIndex);
       });
       return;
     }
@@ -111,6 +144,7 @@ class _LessonScreenState extends State<LessonScreen> {
       course: widget.course,
       lesson: widget.lesson,
       correctAnswers: _correct,
+      totalQuestions: _exercises.length,
     );
     if (mounted) setState(() => _finished = true);
   }
@@ -135,10 +169,101 @@ class _LessonScreenState extends State<LessonScreen> {
       appBar: AppBar(title: Text(widget.lesson.title.resolve(_language))),
       body: SafeArea(
         top: false,
-        child: _studying ? _studyView() : _exerciseView(),
+        child: _showingGuide
+            ? _guideView()
+            : (_studying ? _studyView() : _exerciseView()),
       ),
     );
   }
+
+  Widget _guideView() => ListView(
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+    children: [
+      Icon(
+        Icons.psychology_alt_rounded,
+        size: 64,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      const SizedBox(height: 18),
+      Text(
+        localized(_language, pl: 'ZANIM ZACZNIESZ', uk: 'ПЕРЕД ПОЧАТКОМ'),
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.labelLarge,
+      ),
+      const SizedBox(height: 10),
+      Text(
+        widget.lesson.objective.resolve(_language),
+        textAlign: TextAlign.center,
+        style: Theme.of(
+          context,
+        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+      ),
+      const SizedBox(height: 22),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.lightbulb_rounded),
+                  const SizedBox(width: 10),
+                  Text(
+                    localized(_language, pl: 'Wyjaśnienie', uk: 'Пояснення'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(widget.lesson.explanation.resolve(_language)),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 14),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                localized(
+                  _language,
+                  pl: 'Kolejność pracy',
+                  uk: 'Порядок роботи',
+                ),
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                localized(
+                  _language,
+                  pl: '1. Zobacz i posłuchaj  •  2. Rozpoznaj  •  3. Ułóż lub wpisz  •  4. Powtórz później',
+                  uk: '1. Подивись і послухай  •  2. Розпізнай  •  3. Склади або введи  •  4. Повтори пізніше',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 24),
+      FilledButton.icon(
+        onPressed: () => setState(() => _showingGuide = false),
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: Text(
+          localized(
+            _language,
+            pl: 'Zacznij krok po kroku',
+            uk: 'Почати крок за кроком',
+          ),
+        ),
+      ),
+    ],
+  );
 
   Widget _studyView() {
     final item = widget.lesson.items[_studyIndex];
@@ -234,9 +359,11 @@ class _LessonScreenState extends State<LessonScreen> {
 
   Widget _exerciseView() {
     final exercise = _exercises[_exerciseIndex];
-    final canCheck = exercise.type == ExerciseType.writing
-        ? _answerController.text.trim().isNotEmpty
-        : _selectedOption != null;
+    final canCheck = switch (exercise.type) {
+      ExerciseType.writing => _answerController.text.trim().isNotEmpty,
+      ExerciseType.wordOrder => _assembledTiles.isNotEmpty,
+      _ => _selectedOption != null,
+    };
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
@@ -296,6 +423,8 @@ class _LessonScreenState extends State<LessonScreen> {
               ),
             ),
           )
+        else if (exercise.type == ExerciseType.wordOrder)
+          _wordOrderTiles()
         else
           RadioGroup<String>(
             groupValue: _selectedOption,
@@ -346,6 +475,11 @@ class _LessonScreenState extends State<LessonScreen> {
                     Text(
                       '${localized(_language, pl: 'Poprawna odpowiedź', uk: 'Правильна відповідь')}: ${exercise.answer}',
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.lesson.explanation.resolve(_language),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ],
               ),
@@ -379,6 +513,11 @@ class _LessonScreenState extends State<LessonScreen> {
       pl: 'Wybierz właściwe znaczenie',
       uk: 'Обери правильне значення',
     ),
+    ExerciseType.reverseChoice => localized(
+      _language,
+      pl: 'Wybierz właściwe wyrażenie w języku kursu',
+      uk: 'Обери правильний вислів мовою курсу',
+    ),
     ExerciseType.writing => localized(
       _language,
       pl: 'Napisz w języku ${widget.course.name.resolve(_language).toLowerCase()}',
@@ -389,7 +528,80 @@ class _LessonScreenState extends State<LessonScreen> {
       pl: 'Posłuchaj i wybierz znaczenie',
       uk: 'Прослухай і обери значення',
     ),
+    ExerciseType.wordOrder => localized(
+      _language,
+      pl: 'Zapisz całe wyrażenie we właściwej kolejności',
+      uk: 'Запиши весь вислів у правильному порядку',
+    ),
   };
+
+  Widget _wordOrderTiles() {
+    final language = _language;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InputDecorator(
+          decoration: InputDecoration(
+            labelText: localized(
+              language,
+              pl: 'Twoje zdanie',
+              uk: 'Твоє речення',
+            ),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 54),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (_assembledTiles.isEmpty)
+                  Text(
+                    localized(
+                      language,
+                      pl: 'Dotknij słów poniżej',
+                      uk: 'Торкнися слів нижче',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                for (var index = 0; index < _assembledTiles.length; index++)
+                  ActionChip(
+                    label: Text(_assembledTiles[index]),
+                    onPressed: _answered
+                        ? null
+                        : () => setState(() {
+                            _availableTiles.add(
+                              _assembledTiles.removeAt(index),
+                            );
+                          }),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          localized(language, pl: 'Dostępne słowa', uk: 'Доступні слова'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var index = 0; index < _availableTiles.length; index++)
+              FilledButton.tonal(
+                onPressed: _answered
+                    ? null
+                    : () => setState(() {
+                        _assembledTiles.add(_availableTiles.removeAt(index));
+                      }),
+                child: Text(_availableTiles[index]),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 
   Color? _optionColor(String option, String answer) {
     if (!_answered) return null;

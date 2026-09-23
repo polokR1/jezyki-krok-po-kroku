@@ -42,6 +42,27 @@ class SettingsScreen extends StatelessWidget {
                 controller.setInterfaceLanguage(value.first),
           ),
           const SizedBox(height: 24),
+          _SectionTitle(
+            localized(language, pl: 'Plan nauki', uk: 'План навчання'),
+          ),
+          DropdownButtonFormField<int>(
+            initialValue: controller.dailyGoalMinutes,
+            decoration: InputDecoration(
+              labelText: localized(
+                language,
+                pl: 'Dzienny cel',
+                uk: 'Щоденна мета',
+              ),
+            ),
+            items: [
+              for (final minutes in const [5, 10, 15, 20, 30])
+                DropdownMenuItem(value: minutes, child: Text('$minutes min')),
+            ],
+            onChanged: (value) {
+              if (value != null) controller.setDailyGoalMinutes(value);
+            },
+          ),
+          const SizedBox(height: 24),
           _SectionTitle(localized(language, pl: 'Wygląd', uk: 'Вигляд')),
           DropdownButtonFormField<String>(
             initialValue: controller.themePreference,

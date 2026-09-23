@@ -25,6 +25,40 @@ class StudyPathScreen extends StatelessWidget {
     );
   }
 
+  void _openReview(BuildContext context, LanguageCourse course) {
+    final progress = controller.progressFor(course.id);
+    final due = course.items.where((item) => progress.isDue(item.id)).toList();
+    final candidates = due.isNotEmpty
+        ? due
+        : course.items
+              .where((item) => !progress.masteredItems.contains(item.id))
+              .toList();
+    candidates.sort(
+      (a, b) => (progress.itemStrength[a.id] ?? 0).compareTo(
+        progress.itemStrength[b.id] ?? 0,
+      ),
+    );
+    final items = candidates.take(5).toList(growable: false);
+    if (items.isEmpty) return;
+    _openLesson(
+      context,
+      course,
+      CourseLesson(
+        id: '${course.id}_review',
+        title: LocalizedText(
+          pl: due.isNotEmpty ? 'Zaplanowana powtórka' : 'Trening słówek',
+          uk: due.isNotEmpty ? 'Заплановане повторення' : 'Тренування слів',
+        ),
+        objective: LocalizedText(
+          pl: 'Utrwal ${items.length} najsłabszych wyrażeń',
+          uk: 'Закріпи ${items.length} найслабших висловів',
+        ),
+        items: items,
+        minutes: 8,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final course = controller.selectedCourse!;
@@ -81,10 +115,33 @@ class StudyPathScreen extends StatelessWidget {
                 Text(
                   localized(
                     language,
-                    pl: '${controller.completedLessons(course)} z ${course.lessons.length} lekcji ukończonych',
-                    uk: '${controller.completedLessons(course)} із ${course.lessons.length} уроків завершено',
+                    pl: '${controller.completedActivities(course)} z ${course.activityCount} aktywności ukończonych',
+                    uk: '${controller.completedActivities(course)} із ${course.activityCount} активностей завершено',
                   ),
                   style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _CounterBadge(
+                      icon: Icons.auto_awesome_rounded,
+                      text: localized(
+                        language,
+                        pl: 'Opanowane ${controller.masteredItems(course)}/${course.items.length}',
+                        uk: 'Засвоєно ${controller.masteredItems(course)}/${course.items.length}',
+                      ),
+                    ),
+                    _CounterBadge(
+                      icon: Icons.event_repeat_rounded,
+                      text: localized(
+                        language,
+                        pl: 'Powtórki ${controller.dueReviews(course)}',
+                        uk: 'Повторення ${controller.dueReviews(course)}',
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 18),
                 FilledButton.icon(
@@ -102,22 +159,51 @@ class StudyPathScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white70),
+                  ),
+                  onPressed: () => _openReview(context, course),
+                  icon: const Icon(Icons.event_repeat_rounded),
+                  label: Text(
+                    localized(
+                      language,
+                      pl: controller.dueReviews(course) > 0
+                          ? 'Wykonaj powtórkę (${controller.dueReviews(course)})'
+                          : 'Trening słówek',
+                      uk: controller.dueReviews(course) > 0
+                          ? 'Виконати повторення (${controller.dueReviews(course)})'
+                          : 'Тренування слів',
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 26),
           Text(
-            localized(language, pl: 'Moduły kursu', uk: 'Модулі курсу'),
+            localized(
+              language,
+              pl: 'Ścieżka krok po kroku',
+              uk: 'Шлях крок за кроком',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
-          for (final module in course.modules) ...[
+          for (
+            var moduleIndex = 0;
+            moduleIndex < course.modules.length;
+            moduleIndex++
+          ) ...[
             _ModuleCard(
               controller: controller,
               course: course,
-              module: module,
+              module: course.modules[moduleIndex],
+              moduleIndex: moduleIndex,
               onOpen: (lesson) => _openLesson(context, course, lesson),
             ),
             const SizedBox(height: 14),
@@ -128,17 +214,42 @@ class StudyPathScreen extends StatelessWidget {
   }
 }
 
+class _CounterBadge extends StatelessWidget {
+  const _CounterBadge({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.white),
+        const SizedBox(width: 5),
+        Text(text, style: const TextStyle(color: Colors.white)),
+      ],
+    ),
+  );
+}
+
 class _ModuleCard extends StatelessWidget {
   const _ModuleCard({
     required this.controller,
     required this.course,
     required this.module,
+    required this.moduleIndex,
     required this.onOpen,
   });
 
   final AppController controller;
   final LanguageCourse course;
   final CourseModule module;
+  final int moduleIndex;
   final ValueChanged<CourseLesson> onOpen;
 
   @override
@@ -153,7 +264,7 @@ class _ModuleCard extends StatelessWidget {
         childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
         leading: CircleAvatar(child: Text(module.level)),
         title: Text(
-          module.title.resolve(language),
+          '${localized(language, pl: 'Etap', uk: 'Етап')} ${moduleIndex + 1}. ${module.title.resolve(language)}',
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
@@ -161,22 +272,43 @@ class _ModuleCard extends StatelessWidget {
         ),
         children: [
           for (var index = 0; index < module.lessons.length; index++)
-            ListTile(
-              key: ValueKey('lesson-${course.id}-${module.lessons[index].id}'),
-              leading: CircleAvatar(
-                backgroundColor:
-                    controller.isLessonCompleted(course, module.lessons[index])
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : null,
-                child:
-                    controller.isLessonCompleted(course, module.lessons[index])
-                    ? const Icon(Icons.check_rounded)
-                    : Text('${index + 1}'),
-              ),
-              title: Text(module.lessons[index].title.resolve(language)),
-              subtitle: Text(module.lessons[index].objective.resolve(language)),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => onOpen(module.lessons[index]),
+            Builder(
+              builder: (context) {
+                final lesson = module.lessons[index];
+                final available = controller.isLessonAvailable(course, lesson);
+                final completed = controller.isLessonCompleted(course, lesson);
+                return ListTile(
+                  key: ValueKey(
+                    'lesson-${course.id}-${module.lessons[index].id}',
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: completed
+                        ? Theme.of(context).colorScheme.primaryContainer
+                        : null,
+                    child: completed
+                        ? const Icon(Icons.check_rounded)
+                        : available
+                        ? Text('${index + 1}')
+                        : const Icon(Icons.lock_outline_rounded, size: 18),
+                  ),
+                  title: Text(lesson.title.resolve(language)),
+                  subtitle: Text(
+                    available
+                        ? lesson.objective.resolve(language)
+                        : localized(
+                            language,
+                            pl: 'Najpierw ukończ poprzedni krok z wynikiem co najmniej 80%.',
+                            uk: 'Спочатку заверши попередній крок із результатом щонайменше 80%.',
+                          ),
+                  ),
+                  trailing: Icon(
+                    available
+                        ? Icons.chevron_right_rounded
+                        : Icons.lock_rounded,
+                  ),
+                  onTap: available ? () => onOpen(lesson) : null,
+                );
+              },
             ),
         ],
       ),

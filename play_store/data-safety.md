@@ -1,4 +1,4 @@
-# Bezpieczeństwo danych — stan projektu 0.1.0
+# Bezpieczeństwo danych — stan projektu 0.3.0
 
 - Aplikacja nie wymaga konta.
 - Postęp i ustawienia są przechowywane lokalnie przez `SharedPreferences`.
