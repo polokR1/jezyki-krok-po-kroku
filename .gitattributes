@@ -1,0 +1,2 @@
+lib/data/generated/multilingual_vocabulary.dart text eol=lf
+tool/generate_multilingual_vocabulary.py text eol=lf
