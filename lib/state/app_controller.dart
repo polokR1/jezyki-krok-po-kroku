@@ -159,16 +159,6 @@ class AppController extends ChangeNotifier {
   bool isLessonCompleted(LanguageCourse course, CourseLesson lesson) =>
       progressFor(course.id).completedLessons.contains(lesson.id);
 
-  bool isLessonAvailable(LanguageCourse course, CourseLesson lesson) {
-    final index = course.lessons.indexWhere(
-      (candidate) => candidate.id == lesson.id,
-    );
-    if (index <= 0) return index == 0;
-    return progressFor(
-      course.id,
-    ).completedLessons.contains(course.lessons[index - 1].id);
-  }
-
   bool isActivityCompleted(String courseId, String activityId) =>
       progressFor(courseId).completedLessons.contains(activityId);
 

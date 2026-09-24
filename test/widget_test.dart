@@ -105,6 +105,33 @@ void main() {
     expect(find.text('Kontynuuj naukę'), findsOneWidget);
   });
 
+  testWidgets('all lessons can be opened without completing previous steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final controller = await AppController.create();
+
+    await tester.pumpWidget(LanguageLearningApp(controller: controller));
+    await tester.tap(find.byKey(const ValueKey('course-english')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Etap 1.'));
+    await tester.pumpAndSettle();
+    final laterLesson = find.byKey(
+      const ValueKey('lesson-english-english_foundation_1_2'),
+    );
+    await tester.ensureVisible(laterLesson);
+    await tester.pumpAndSettle();
+    await tester.tap(laterLesson);
+    await tester.pumpAndSettle();
+
+    expect(find.text('ZANIM ZACZNIESZ'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_rounded), findsNothing);
+  });
+
   testWidgets('interface language can be changed before course selection', (
     tester,
   ) async {

@@ -24,7 +24,7 @@ Najważniejsze funkcje:
 - objaśnienia po polsku lub ukraińsku,
 - pięć początkowych modułów alfabetu greckiego,
 - układanie pełnych zdań z kafelków w każdym języku,
-- kolejne kroki odblokowywane po rzeczywistym zaliczeniu,
+- swobodny wybór dowolnego modułu bez blokowania ścieżki,
 - wymowa dopasowana do wybranego języka,
 - ćwiczenia wyboru, pisania i słuchania,
 - 640 słów i zwrotów oraz 152 aktywności w każdym języku,

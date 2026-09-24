@@ -275,7 +275,6 @@ class _ModuleCard extends StatelessWidget {
             Builder(
               builder: (context) {
                 final lesson = module.lessons[index];
-                final available = controller.isLessonAvailable(course, lesson);
                 final completed = controller.isLessonCompleted(course, lesson);
                 return ListTile(
                   key: ValueKey(
@@ -287,26 +286,12 @@ class _ModuleCard extends StatelessWidget {
                         : null,
                     child: completed
                         ? const Icon(Icons.check_rounded)
-                        : available
-                        ? Text('${index + 1}')
-                        : const Icon(Icons.lock_outline_rounded, size: 18),
+                        : Text('${index + 1}'),
                   ),
                   title: Text(lesson.title.resolve(language)),
-                  subtitle: Text(
-                    available
-                        ? lesson.objective.resolve(language)
-                        : localized(
-                            language,
-                            pl: 'Najpierw ukończ poprzedni krok z wynikiem co najmniej 80%.',
-                            uk: 'Спочатку заверши попередній крок із результатом щонайменше 80%.',
-                          ),
-                  ),
-                  trailing: Icon(
-                    available
-                        ? Icons.chevron_right_rounded
-                        : Icons.lock_rounded,
-                  ),
-                  onTap: available ? () => onOpen(lesson) : null,
+                  subtitle: Text(lesson.objective.resolve(language)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => onOpen(lesson),
                 );
               },
             ),

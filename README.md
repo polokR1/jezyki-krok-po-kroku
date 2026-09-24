@@ -18,9 +18,10 @@ A0 do B1–B2, a wyjaśnienia są dostępne po polsku i ukraińsku.
 Pierwsze moduły uczą całych zdań przez słuchanie, rozpoznawanie, kafelki i
 samodzielne odtwarzanie. Kurs greckiego zaczyna się od pięciu kolejnych modułów
 alfabetu: liter, znaków mylących, sylab, dwuznaków oraz pierwszych słów. Każda
-lekcja ma własne objaśnienie i wskazówkę językową. Kolejne kroki odblokowują się
-po uzyskaniu co najmniej 80%, a trudne elementy trafiają do zaplanowanych
-powtórek.
+lekcja ma własne objaśnienie, kontekst i rozwiniętą wskazówkę wyjaśniającą szyk,
+pisownię albo odmianę. Wszystkie moduły można otworzyć od razu; wynik 80%
+oznacza zaliczenie, ale nie blokuje wyboru materiału. Trudne elementy trafiają do
+zaplanowanych powtórek.
 
 ## Architektura
 
@@ -59,7 +60,7 @@ warto użyć kopii projektu w ścieżce ASCII.
 - pakiet Dart: `jezyki_krok_po_kroku`,
 - Android/iOS: `pl.jezykikrokpokroku.app`,
 - nazwa widoczna: `Języki Krok po Kroku`,
-- bieżąca wersja rozwojowa: `0.3.0+3`.
+- bieżąca wersja rozwojowa: `0.3.1+4`.
 
 Projekt nie używa danych ani kluczy postępu dawnej aplikacji „Svenska Krok po
 Kroku”. Przy pierwszym uruchomieniu usuwa znane stare klucze preferencji.

@@ -9,5 +9,5 @@ artefaktów, certyfikatów, zrzutów ani opisów dawnej aplikacji szwedzkiej.
 
 Przed publikacją trzeba przygotować nowe zrzuty ekranu, grafikę funkcji,
 podpisany AAB, publiczny adres polityki prywatności i właściwy klucz wysyłania.
-Aktualny build `0.3.0+3` jest wersją rozwojową i nie został przesłany do Google
+Aktualny build `0.3.1+4` jest wersją rozwojową i nie został przesłany do Google
 Play.

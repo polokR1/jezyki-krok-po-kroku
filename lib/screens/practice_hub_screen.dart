@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/language_explanations.dart';
 import '../domain/models/course.dart';
 import '../l10n/app_localization.dart';
 import '../services/speech_service.dart';
@@ -256,9 +257,30 @@ class _GrammarLessonScreenState extends State<GrammarLessonScreen>
         children: [
           Chip(label: Text(widget.lesson.level)),
           const SizedBox(height: 14),
-          Text(
-            widget.lesson.explanation.resolve(language),
-            style: Theme.of(context).textTheme.bodyLarge,
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localized(
+                      language,
+                      pl: 'Dlaczego i kiedy tak mówimy?',
+                      uk: 'Чому й коли так говоримо?',
+                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    widget.lesson.explanation.resolve(language),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           Card(
@@ -287,6 +309,29 @@ class _GrammarLessonScreenState extends State<GrammarLessonScreen>
                     ),
                     icon: const Icon(Icons.volume_up_rounded),
                   ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localized(
+                      language,
+                      pl: 'Jak analizować zapis?',
+                      uk: 'Як аналізувати написання?',
+                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(courseWritingGuide(widget.course.id).resolve(language)),
                 ],
               ),
             ),

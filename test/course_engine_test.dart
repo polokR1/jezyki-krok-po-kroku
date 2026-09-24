@@ -166,7 +166,6 @@ void main() {
       expect(controller.completedLessons(english), 1);
       expect(controller.completedLessons(spanish), 0);
       expect(controller.progressFor(english.id).masteredItems, isEmpty);
-      expect(controller.isLessonAvailable(english, english.lessons[1]), isTrue);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.containsKey('completedLessons'), isFalse);
@@ -179,21 +178,53 @@ void main() {
     },
   );
 
-  test('a weak result does not unlock the next step', () async {
-    SharedPreferences.setMockInitialValues({});
-    final controller = await AppController.create();
-    final course = courses.first;
+  test(
+    'a weak result is saved but does not mark the lesson complete',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final controller = await AppController.create();
+      final course = courses.first;
 
-    expect(controller.isLessonAvailable(course, course.lessons.first), isTrue);
-    expect(controller.isLessonAvailable(course, course.lessons[1]), isFalse);
-    await controller.completeLesson(
-      course: course,
-      lesson: course.lessons.first,
-      correctAnswers: 7,
-      totalQuestions: 10,
-    );
+      await controller.completeLesson(
+        course: course,
+        lesson: course.lessons.first,
+        correctAnswers: 7,
+        totalQuestions: 10,
+      );
 
-    expect(controller.isLessonCompleted(course, course.lessons.first), isFalse);
-    expect(controller.isLessonAvailable(course, course.lessons[1]), isFalse);
+      expect(
+        controller.isLessonCompleted(course, course.lessons.first),
+        isFalse,
+      );
+      expect(
+        controller.progressFor(course.id).bestScores[course.lessons.first.id],
+        70,
+      );
+    },
+  );
+
+  test('every course contains substantial bilingual explanations', () {
+    for (final course in courses) {
+      expect(
+        course.lessons.every(
+          (lesson) =>
+              lesson.explanation.pl.length >= 100 &&
+              lesson.explanation.uk.length >= 100,
+        ),
+        isTrue,
+        reason: course.id,
+      );
+      final vocabularyLesson = course.lessons.firstWhere(
+        (lesson) => lesson.id.contains('_vocab_'),
+      );
+      expect(
+        vocabularyLesson.explanation.pl,
+        contains('Dlaczego mówi się lub pisze właśnie tak?'),
+      );
+      expect(
+        vocabularyLesson.explanation.uk,
+        contains('Чому так говорять або пишуть?'),
+      );
+    }
   });
 }

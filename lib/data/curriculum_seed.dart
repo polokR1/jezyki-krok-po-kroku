@@ -1,5 +1,6 @@
 import '../domain/models/course.dart';
 import 'foundation_catalog.dart';
+import 'language_explanations.dart';
 import 'practice_catalog.dart';
 
 class MultilingualWordSeed {
@@ -106,9 +107,10 @@ LanguageCourse buildVocabularyCourse({
                   pl: 'Poznaj 5 nowych wyrażeń, usłysz je i odtwórz z pamięci',
                   uk: 'Вивчи 5 нових висловів, почуй їх і відтвори з пам’яті',
                 ),
-                explanation: LocalizedText(
-                  pl: '${_lessonStepsPl[part]} ${_courseTipPl(id, part)}',
-                  uk: '${_lessonStepsUk[part]} ${_courseTipUk(id, part)}',
+                explanation: _lessonExplanation(
+                  courseId: id,
+                  topicId: topic.id,
+                  part: part,
                 ),
                 items: [
                   for (final word in topic.words.skip(part * 5).take(5))
@@ -126,6 +128,18 @@ LanguageCourse buildVocabularyCourse({
           ],
         ),
     ],
+  );
+}
+
+LocalizedText _lessonExplanation({
+  required String courseId,
+  required String topicId,
+  required int part,
+}) {
+  final why = lessonWhy(courseId: courseId, topicId: topicId, part: part);
+  return LocalizedText(
+    pl: '${why.pl}\n\nJak ćwiczyć? ${_lessonStepsPl[part]}',
+    uk: '${why.uk}\n\nЯк тренуватися? ${_lessonStepsUk[part]}',
   );
 }
 
@@ -176,62 +190,6 @@ const _lessonStepsUk = <String>[
   'Після розпізнавання настає активне відтворення. Для цілих фраз з’являться плитки, а короткі форми введеш самостійно.',
   'Остання частина поєднує слухання, значення і самостійну відповідь. Помилкові елементи повернуться в повтореннях.',
 ];
-
-String _courseTipPl(String courseId, int part) => switch (courseId) {
-  'english' => const [
-    'Zauważaj stały szyk: podmiot, czasownik, reszta zdania.',
-    'Nie zgaduj wymowy z pisowni — korzystaj z odsłuchu.',
-    'W pytaniach zwracaj uwagę na do/does oraz kolejność wyrazów.',
-    'Ucz się krótkich połączeń, np. czasownika razem z przyimkiem.',
-  ][part],
-  'spanish' => const [
-    'Samogłoski zachowują wyraźne, stabilne brzmienie.',
-    'Końcówka czasownika często mówi, kto wykonuje czynność.',
-    'Rodzajnik pomaga zapamiętać rodzaj rzeczownika.',
-    'Akcent graficzny jest częścią poprawnego zapisu.',
-  ][part],
-  'greek' => const [
-    'Najpierw czytaj bez transliteracji, nawet jeśli robisz to powoli.',
-    'Akcent pokazuje sylabę wymawianą mocniej.',
-    'Rodzajnik i końcówka są ważną częścią formy słowa.',
-    'Jeśli mylą Ci się znaki, wróć do jednego z pięciu modułów alfabetu.',
-  ][part],
-  'swedish' => const [
-    'Zapamiętuj rzeczownik razem z en albo ett.',
-    'Długość samogłoski może zmienić brzmienie i znaczenie.',
-    'W zwykłym zdaniu odmieniony czasownik zajmuje zazwyczaj drugą pozycję.',
-    'Końcówka rzeczownika często wyraża formę określoną.',
-  ][part],
-  _ => '',
-};
-
-String _courseTipUk(String courseId, int part) => switch (courseId) {
-  'english' => const [
-    'Помічай сталий порядок: підмет, дієслово, решта речення.',
-    'Не вгадуй вимову з написання — користуйся прослуховуванням.',
-    'У запитаннях звертай увагу на do/does і порядок слів.',
-    'Вчи короткі сполучення, наприклад дієслово разом із прийменником.',
-  ][part],
-  'spanish' => const [
-    'Голосні мають чітке й стабільне звучання.',
-    'Закінчення дієслова часто показує, хто виконує дію.',
-    'Артикль допомагає запам’ятати рід іменника.',
-    'Графічний наголос є частиною правильного написання.',
-  ][part],
-  'greek' => const [
-    'Спочатку читай без транслітерації, навіть якщо повільно.',
-    'Наголос показує склад, який вимовляється сильніше.',
-    'Артикль і закінчення є важливою частиною форми слова.',
-    'Якщо плутаються знаки, повернися до одного з п’яти модулів алфавіту.',
-  ][part],
-  'swedish' => const [
-    'Запам’ятовуй іменник разом з en або ett.',
-    'Довжина голосної може змінити звучання і значення.',
-    'У звичайному реченні змінене дієслово зазвичай стоїть другим.',
-    'Закінчення іменника часто виражає означену форму.',
-  ][part],
-  _ => '',
-};
 
 LocalizedText _topicDescription(String topicId) {
   final description =

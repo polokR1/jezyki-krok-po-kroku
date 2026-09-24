@@ -1,4 +1,5 @@
 import '../domain/models/course.dart';
+import 'language_explanations.dart';
 
 class _PhraseSeed {
   const _PhraseSeed(
@@ -84,10 +85,7 @@ CourseModule _buildPhraseModule(
             pl: _foundationObjectivesPl[part],
             uk: _foundationObjectivesUk[part],
           ),
-          explanation: LocalizedText(
-            pl: '${_foundationExplanationsPl[part]} ${_languageTipPl(courseId, part)}',
-            uk: '${_foundationExplanationsUk[part]} ${_languageTipUk(courseId, part)}',
-          ),
+          explanation: _foundationExplanation(courseId, part),
           items: [
             for (final phrase in phrases.skip(part * 5).take(5))
               LearningItem(
@@ -99,6 +97,14 @@ CourseModule _buildPhraseModule(
           minutes: 10,
         ),
     ],
+  );
+}
+
+LocalizedText _foundationExplanation(String courseId, int part) {
+  final why = lessonWhy(courseId: courseId, topicId: 'foundation', part: part);
+  return LocalizedText(
+    pl: '${why.pl}\n\nJak ćwiczyć? ${_foundationExplanationsPl[part]}',
+    uk: '${why.uk}\n\nЯк тренуватися? ${_foundationExplanationsUk[part]}',
   );
 }
 
@@ -184,62 +190,6 @@ const _foundationExplanationsUk = <String>[
   'Плитки навчають порядку слів без зайвого навантаження правописом. Після складання прочитай усе речення.',
   'Активне пригадування зміцнює пам’ять. Помилка означає швидше повторення, а не покарання.',
 ];
-
-String _languageTipPl(String courseId, int part) => switch (courseId) {
-  'english' => const [
-    'W angielskim podmiot zwykle stoi przed czasownikiem.',
-    'Zwróć uwagę na krótkie formy I’m i don’t.',
-    'W pytaniu operator często pojawia się przed podmiotem.',
-    'Powtarzaj całe połączenia słów, nie pojedyncze tłumaczenia.',
-  ][part],
-  'spanish' => const [
-    'W hiszpańskim akcent i samogłoski wymawia się wyraźnie.',
-    'Podmiot bywa pomijany, bo osobę wskazuje końcówka czasownika.',
-    'Pytanie zapisuje się między znakami ¿ oraz ?.',
-    'Ucz się rzeczownika razem z rodzajnikiem, gdy się pojawia.',
-  ][part],
-  'greek' => const [
-    'Czytaj powoli i zawsze zauważaj znak akcentu.',
-    'Końcówka czasownika często wskazuje osobę.',
-    'Nie zamieniaj greckich liter na podobne litery łacińskie.',
-    'Najpierw odtwórz brzmienie, dopiero potem sprawdzaj zapis.',
-  ][part],
-  'swedish' => const [
-    'Słuchaj długości samogłosek i melodii całego zwrotu.',
-    'Rzeczowniki najlepiej zapamiętywać razem z en albo ett.',
-    'W zdaniu oznajmującym odmieniony czasownik zajmuje zwykle drugą pozycję.',
-    'Powtarzaj całe zwroty z naturalnym rytmem.',
-  ][part],
-  _ => '',
-};
-
-String _languageTipUk(String courseId, int part) => switch (courseId) {
-  'english' => const [
-    'В англійській підмет зазвичай стоїть перед дієсловом.',
-    'Звертай увагу на короткі форми I’m і don’t.',
-    'У запитанні допоміжне дієслово часто стоїть перед підметом.',
-    'Вчи цілі сполучення слів, а не окремі переклади.',
-  ][part],
-  'spanish' => const [
-    'В іспанській наголос і голосні вимовляються виразно.',
-    'Підмет часто пропускають, бо особу показує закінчення дієслова.',
-    'Запитання пишеться між знаками ¿ та ?.',
-    'Коли є артикль, вчи іменник разом із ним.',
-  ][part],
-  'greek' => const [
-    'Читай повільно й завжди помічай знак наголосу.',
-    'Закінчення дієслова часто показує особу.',
-    'Не замінюй грецькі літери схожими латинськими.',
-    'Спочатку відтвори звучання, а потім перевір написання.',
-  ][part],
-  'swedish' => const [
-    'Слухай довжину голосних і мелодику всієї фрази.',
-    'Іменники найкраще вчити разом з en або ett.',
-    'У розповідному реченні змінене дієслово зазвичай стоїть другим.',
-    'Повторюй цілі фрази з природним ритмом.',
-  ][part],
-  _ => '',
-};
 
 const _alphabetObjectivesPl = <String>[
   'Zobacz znaki i połącz je z dźwiękiem',
